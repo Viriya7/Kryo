@@ -36,7 +36,7 @@ public class BlueprintListener implements Listener {
             String id = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
             if ("BLUEPRINT".equals(id)) {
                 event.setCancelled(true);
-                BlueprintGUI.openGUI(event.getPlayer());
+                BlueprintGUI.openMenu(event.getPlayer(), 0);
             }
         }
     }
