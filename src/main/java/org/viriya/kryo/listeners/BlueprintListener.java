@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.viriya.kryo.blueprint.BlueprintGUI;
 
 public class BlueprintListener implements Listener {
 
@@ -35,6 +36,7 @@ public class BlueprintListener implements Listener {
             String id = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
             if ("BLUEPRINT".equals(id)) {
                 event.setCancelled(true);
+                BlueprintGUI.openGUI(event.getPlayer());
             }
         }
     }
