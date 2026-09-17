@@ -15,6 +15,7 @@ Kryo adalah plugin teknologi yang menghadirkan kembali keseruan mekanik klasik a
 ## Tentang Kami 📜
 
 * Jangan Lupa Star ⭐
+* Jika ingin berkontribusi Gmail : viriyanand4@gmail.com
 
 ## Warning 🚫
 
