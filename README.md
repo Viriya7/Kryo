@@ -1,5 +1,7 @@
 # Kryo
 
+<p align="center"><a><img width="100" height="100" alt="apa weh yang penting kotak(1)" src="https://github.com/user-attachments/assets/d2a5de25-4aa8-487a-9966-6a45c2e46a32"></a></p>
+
 <p align="center">
   <a href="https://github.com/Viriya7/Kryo/actions"><img src="https://img.shields.io/github/actions/workflow/status/Viriya7/Kryo/maven.yml?&style=flat-square" alt="Build Status"></a>
   <a href="https://papermc.io"><img src="https://img.shields.io/badge/paper-1.20+-blue?style=flat-square" alt="Paper Version"></a>
