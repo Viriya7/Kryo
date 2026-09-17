@@ -1,0 +1,8 @@
+name: Kryo
+version: '1.0-SNAPSHOT'
+main: org.viriya.kryo.Kryo
+api-version: '1.20'
+load: STARTUP
+authors: [ Viriya7 ]
+description: Kryo adalah plugin teknologi yang menghadirkan kembali keseruan mekanik klasik ala Slimefun. Kryo dirancang untuk mengubah pengalaman Minecraft vanilla menjadi server yang canggih, kaya fitur, dan dioptimalkan khusus untuk performa server tinggi—sangat cocok untuk server survival multiplayer (SMP).
+website: https://github.com/Viriya7/Kryo
