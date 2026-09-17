@@ -14,13 +14,13 @@ Kryo adalah plugin teknologi yang menghadirkan kembali keseruan mekanik klasik a
 
 ## Tentang Kami 📜
 
-* Belum Ada ges 😭😔
+* Jangan Lupa Star ⭐
 
 ## Warning 🚫
 
 > [!CAUTION]
 > PLUGIN INI BARU EKSPERIMENTAL. JANGAN GUNAKAN DULU DI PUBLIC SERVER SEBELUM KAMI MENGELUARKAN VERSI RILISNYA!!
 
-## Kryo in Pictures
+## Kryo in Pictures 📷
 
 Nothing here!
