@@ -5,7 +5,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemStack;
+import org.viriya.kryo.api.KryoRegistry;
 import org.viriya.kryo.blueprint.BlueprintGUI;
+import org.viriya.kryo.blueprint.BlueprintGroup;
+
+import java.util.List;
 
 public class BlueprintClickListener implements Listener {
 
@@ -13,29 +18,41 @@ public class BlueprintClickListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         String title = PlainTextComponentSerializer.plainText().serialize(event.getView().title());
 
-        if (title.contains("Blueprint")) {
+        if (title.equals("Blueprint")) {
             event.setCancelled(true);
             if (!(event.getWhoClicked() instanceof Player player)) {
                 return;
             }
 
             int slot = event.getRawSlot();
-            int currentPage = 0;
-
-            try {
-                if (title.contains("Page ")) {
-                    currentPage = Integer.parseInt(title.split("Page ")[1].trim()) - 1;
-                }
-            } catch (Exception ignored) {}
+            ItemStack clickedItem = event.getCurrentItem();
 
             if (slot == 0) {
                 BlueprintGUI.openSettings(player);
-            } else if (slot == 46 && event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
-                BlueprintGUI.openMenu(player, currentPage - 1);
-            } else if (slot == 52 && event.getCurrentItem() != null && !event.getCurrentItem().getType().isAir()) {
-                BlueprintGUI.openMenu(player, currentPage + 1);
+                return;
             }
-        } else if (title.contains("Settings")) {
+
+            if (clickedItem != null && clickedItem.hasItemMeta()) {
+                List<BlueprintGroup> groups = KryoRegistry.getGroups();
+                for (BlueprintGroup group : groups) {
+                    if (clickedItem.getType() == group.getIcon()) {
+                        BlueprintGUI.openGroupMenu(player, group);
+                        break;
+                    }
+                }
+            }
+        } else if (isGroupMenu(title)) {
+            event.setCancelled(true);
+            if (!(event.getWhoClicked() instanceof Player player)) {
+                return;
+            }
+
+            int slot = event.getRawSlot();
+            // Tombol Back berada di slot 52 (y = 5, x = 7)
+            if (slot == 52) {
+                BlueprintGUI.openMenu(player);
+            }
+        } else if (title.equals("Settings")) {
             event.setCancelled(true);
             if (!(event.getWhoClicked() instanceof Player player)) {
                 return;
@@ -43,8 +60,19 @@ public class BlueprintClickListener implements Listener {
 
             int slot = event.getRawSlot();
             if (slot == 26) {
-                BlueprintGUI.openMenu(player, 0);
+                BlueprintGUI.openMenu(player);
             }
         }
+    }
+
+    private boolean isGroupMenu(String title) {
+        List<BlueprintGroup> groups = KryoRegistry.getGroups();
+        for (BlueprintGroup group : groups) {
+            String groupName = PlainTextComponentSerializer.plainText().serialize(group.getName());
+            if (title.equals(groupName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

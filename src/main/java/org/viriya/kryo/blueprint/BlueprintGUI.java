@@ -15,10 +15,8 @@ import java.util.List;
 
 public class BlueprintGUI {
 
-    private static final int ITEMS_PER_PAGE = 28;
-
-    public static void openMenu(Player player, int page) {
-        Component title = Component.text("Blueprint - Page " + (page + 1), NamedTextColor.BLUE).decoration(TextDecoration.BOLD, true);
+    public static void openMenu(Player player) {
+        Component title = Component.text("Blueprint", NamedTextColor.BLUE).decoration(TextDecoration.BOLD, true);
         Inventory gui = Bukkit.createInventory(null, 54, title);
 
         ItemStack border = createGuiItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "));
@@ -28,7 +26,7 @@ public class BlueprintGUI {
             for (int x = 0; x < 9; x++) {
                 int slot = y * 9 + x;
                 if (y == 0 || y == 5) {
-                    if (y == 0 && x == 0) {
+                    if (y == 0 && x == 1) {
                         gui.setItem(slot, settings);
                     } else {
                         gui.setItem(slot, border);
@@ -38,27 +36,39 @@ public class BlueprintGUI {
         }
 
         List<BlueprintGroup> groups = KryoRegistry.getGroups();
-        int totalPages = (int) Math.ceil((double) groups.size() / ITEMS_PER_PAGE);
+        int slotIndex = 9; // Mulai dari baris ke-2, kolom ke-0 (x=0, y=1)
 
-        int startIndex = page * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, groups.size());
-
-        int slotIndex = 10;
-        for (int i = startIndex; i < endIndex; i++) {
-            if ((slotIndex + 1) % 9 == 0) {
-                slotIndex += 2;
-            }
+        for (int i = 0; i < groups.size() && slotIndex < 45; i++) {
             gui.setItem(slotIndex++, groups.get(i).getIconItem());
         }
 
-        if (page > 0) {
-            ItemStack prevPage = createGuiItem(Material.ENCHANTED_BOOK, Component.text("Previous Page", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-            gui.setItem(46, prevPage);
+        player.openInventory(gui);
+    }
+
+    public static void openGroupMenu(Player player, BlueprintGroup group) {
+        Component title = group.getName().decoration(TextDecoration.BOLD, true);
+        Inventory gui = Bukkit.createInventory(null, 54, title);
+
+        ItemStack border = createGuiItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "));
+        ItemStack backButton = createGuiItem(Material.BARRIER, Component.text("Back", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+
+        for (int y = 0; y < 6; y++) {
+            for (int x = 0; x < 9; x++) {
+                int slot = y * 9 + x;
+                if (y == 0 || y == 5) {
+                    gui.setItem(slot, border);
+                }
+            }
         }
 
-        if (page < totalPages - 1) {
-            ItemStack nextPage = createGuiItem(Material.ENCHANTED_BOOK, Component.text("Next Page", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-            gui.setItem(52, nextPage);
+        // Tombol Back di y = 5, x = 7 -> Slot 52
+        gui.setItem(52, backButton);
+
+        List<ItemStack> items = group.getItems();
+        int slotIndex = 9; // Mulai dari x = 0, y = 1
+
+        for (int i = 0; i < items.size() && slotIndex < 45; i++) {
+            gui.setItem(slotIndex++, items.get(i));
         }
 
         player.openInventory(gui);
