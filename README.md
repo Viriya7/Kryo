@@ -14,11 +14,6 @@
 
 Kryo adalah plugin teknologi yang menghadirkan kembali keseruan mekanik klasik ala Slimefun. Kryo dirancang untuk mengubah pengalaman Minecraft vanilla menjadi server yang canggih, kaya fitur, dan dioptimalkan khusus untuk performa server tinggi—sangat cocok untuk server survival multiplayer (SMP).
 
-## Tentang Kami 📜
-
-* Jangan Lupa Star ⭐
-* Jika ingin berkontribusi Gmail : viriyanand4@gmail.com
-
 ## Warning 🚫
 
 > [!CAUTION]
@@ -26,4 +21,9 @@ Kryo adalah plugin teknologi yang menghadirkan kembali keseruan mekanik klasik a
 
 ## Kryo in Pictures 📷
 
-Nothing here!
+<table align="center" width="100%">
+  <tr>
+    <img width="350" alt="gambar" src="https://github.com/user-attachments/assets/fe8be7b3-ffd5-4d30-801a-d25b83fc3d98" />
+  </tr>
+</table>
+
