@@ -12,6 +12,7 @@ import org.viriya.kryo.commands.KryoCommand;
 import org.viriya.kryo.listeners.BlueprintClickListener;
 import org.viriya.kryo.listeners.BlueprintListener;
 import org.viriya.kryo.listeners.PlayerJoinListener;
+import org.viriya.kryo.workbench.WorkbenchManager;
 
 public final class Kryo extends JavaPlugin {
 
@@ -20,6 +21,9 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BlueprintListener(this), this);
         getServer().getPluginManager().registerEvents(new BlueprintClickListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+
+        WorkbenchManager.init(this);
+        getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
