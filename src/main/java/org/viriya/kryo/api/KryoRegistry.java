@@ -17,6 +17,15 @@ public class KryoRegistry {
         }
     }
 
+    public static BlueprintGroup getGroup(String id) {
+        for (BlueprintGroup group : GROUPS) {
+            if (group.getId().equalsIgnoreCase(id)) {
+                return group;
+            }
+        }
+        return null;
+    }
+
     public static List<BlueprintGroup> getGroups() {
         return Collections.unmodifiableList(GROUPS);
     }

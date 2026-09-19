@@ -22,6 +22,7 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BlueprintClickListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
 
+        registerGroups();
         WorkbenchManager.init(this);
         getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
 
@@ -29,8 +30,6 @@ public final class Kryo extends JavaPlugin {
         if (kryoCommand != null) {
             kryoCommand.setExecutor(new KryoCommand(this));
         }
-
-        registerGroups();
     }
 
     private void registerGroups() {
@@ -39,7 +38,7 @@ public final class Kryo extends JavaPlugin {
         BlueprintGroup machineGroup = new BlueprintGroup(
                 "MACHINE",
                 machineTexture,
-                Component.text("Machine", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false)
+                Component.text("Machine", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
         );
 
         KryoRegistry.registerGroup(machineGroup);

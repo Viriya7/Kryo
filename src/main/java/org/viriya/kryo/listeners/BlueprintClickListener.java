@@ -1,6 +1,7 @@
 package org.viriya.kryo.listeners;
 
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -9,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.viriya.kryo.api.KryoRegistry;
 import org.viriya.kryo.blueprint.BlueprintGUI;
 import org.viriya.kryo.blueprint.BlueprintGroup;
+import org.viriya.kryo.blueprint.BlueprintItem;
 
 import java.util.List;
 
@@ -48,18 +50,40 @@ public class BlueprintClickListener implements Listener {
             }
 
             int slot = event.getRawSlot();
-            // Tombol Back berada di slot 52 (y = 5, x = 7)
+
             if (slot == 52) {
                 BlueprintGUI.openMenu(player);
+                return;
             }
-        } else if (title.equals("Settings")) {
+
+            ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem != null && clickedItem.getType() != Material.AIR) {
+                for (BlueprintGroup group : KryoRegistry.getGroups()) {
+                    BlueprintItem.ItemRecipe recipe = BlueprintItem.getRecipe(group.getId(), clickedItem);
+                    if (recipe != null) {
+                        BlueprintItem.openBlueprintRecipeGUI(player, recipe);
+                        break;
+                    }
+                }
+            }
+        } else if (title.startsWith("Blueprint > ")) {
             event.setCancelled(true);
             if (!(event.getWhoClicked() instanceof Player player)) {
                 return;
             }
 
             int slot = event.getRawSlot();
-            if (slot == 26) {
+            if (slot == 0) {
+                ItemStack resultItem = event.getInventory().getItem(16);
+                if (resultItem != null) {
+                    for (BlueprintGroup group : KryoRegistry.getGroups()) {
+                        BlueprintItem.ItemRecipe recipe = BlueprintItem.getRecipe(group.getId(), resultItem);
+                        if (recipe != null) {
+                            BlueprintGUI.openGroupMenu(player, group);
+                            return;
+                        }
+                    }
+                }
                 BlueprintGUI.openMenu(player);
             }
         }

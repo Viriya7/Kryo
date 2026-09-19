@@ -24,6 +24,7 @@ import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.viriya.kryo.blueprint.BlueprintItem;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,15 @@ public class WorkbenchManager implements Listener {
     public static void init(Plugin plugin) {
         workbenchKey = new NamespacedKey(plugin, "custom_workbench");
         registerRecipe(plugin);
+
+        // --------REGISTER ITEM KE GROUP------------
+        ItemStack[] workbenchRecipe = {
+                null, new ItemStack(Material.WOODEN_AXE), null,
+                new ItemStack(Material.WOODEN_PICKAXE), new ItemStack(Material.CRAFTING_TABLE), new ItemStack(Material.WOODEN_SHOVEL),
+                null, new ItemStack(Material.WOODEN_HOE), null
+        };
+
+        BlueprintItem.registerToGroup("MACHINE", getWorkbenchItem(), new ItemStack(Material.CRAFTING_TABLE), workbenchRecipe);
     }
 
     public static ItemStack getWorkbenchItem() {
