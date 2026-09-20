@@ -41,7 +41,12 @@ public final class Kryo extends JavaPlugin {
                 Component.text("Machine", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
         );
 
+        BlueprintGroup resourcesGroup = new BlueprintGroup("RESOURCES", Material.OAK_SAPLING, Component.text("Resources", NamedTextColor.GREEN));
+        BlueprintGroup toolsGroup = new BlueprintGroup("TOOLS", Material.IRON_PICKAXE, Component.text("Tools", NamedTextColor.WHITE));
+
         KryoRegistry.registerGroup(machineGroup);
+        KryoRegistry.registerGroup(toolsGroup);
+        KryoRegistry.registerGroup(resourcesGroup);
     }
 
     @Override

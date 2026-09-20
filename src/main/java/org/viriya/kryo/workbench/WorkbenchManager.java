@@ -8,8 +8,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Display;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,21 +24,20 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.viriya.kryo.blueprint.BlueprintItem;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public class WorkbenchManager implements Listener {
 
     private static NamespacedKey workbenchKey;
-    private static final Map<Location, ItemDisplay> activeWorkbenches = new HashMap<>();
+    private static final Set<Location> activeWorkbenches = new HashSet<>();
     private static final Component GUI_TITLE = Component.text("Workbench", NamedTextColor.DARK_GRAY);
 
     public static void init(Plugin plugin) {
         workbenchKey = new NamespacedKey(plugin, "custom_workbench");
         registerRecipe(plugin);
 
-        // --------REGISTER ITEM KE GROUP------------
         ItemStack[] workbenchRecipe = {
                 null, new ItemStack(Material.WOODEN_AXE), null,
                 new ItemStack(Material.WOODEN_PICKAXE), new ItemStack(Material.CRAFTING_TABLE), new ItemStack(Material.WOODEN_SHOVEL),
@@ -55,11 +52,9 @@ public class WorkbenchManager implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.displayName(Component.text("Workbench"));
-
             meta.lore(List.of(
                     Component.text("Where the magic begins", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, true)
             ));
-
             meta.getPersistentDataContainer().set(workbenchKey, PersistentDataType.BYTE, (byte) 1);
             item.setItemMeta(meta);
         }
@@ -102,14 +97,8 @@ public class WorkbenchManager implements Listener {
             border.setItemMeta(meta);
         }
 
-        // Mapping layout 3 baris x 9 kolom (0 sampai 26)
-        // Baris 0: [b][i][i][i][b][b][b][b][b] -> Slot 0, 4,5,6,7,8 border | 1,2,3 input
-        // Baris 1: [b][i][i][i][b][b][o][b][b] -> Slot 9, 13,14,15,16,17 border | 10,11,12 input | 15 adalah 'o' (indeks ke-15)
-        // Baris 2: [b][i][i][i][b][b][b][b][b] -> Slot 18, 22,23,24,25,26 border | 19,20,21 input
-
         for (int i = 0; i < 27; i++) {
             boolean isBorder = false;
-
             int row = i / 9;
             int col = i % 9;
 
@@ -134,16 +123,7 @@ public class WorkbenchManager implements Listener {
             return;
         }
 
-        Block block = event.getBlockPlaced();
-        Location loc = block.getLocation();
-
-        Location displayLoc = loc.clone().add(0.5, 0.5, 0.5);
-        ItemDisplay display = loc.getWorld().spawn(displayLoc, ItemDisplay.class, entity -> {
-            entity.setItemStack(new ItemStack(Material.SMITHING_TABLE));
-            entity.setBrightness(new Display.Brightness(15, 15));
-        });
-
-        activeWorkbenches.put(loc, display);
+        activeWorkbenches.add(event.getBlockPlaced().getLocation());
     }
 
     @EventHandler
@@ -151,11 +131,8 @@ public class WorkbenchManager implements Listener {
         Block block = event.getBlock();
         Location loc = block.getLocation();
 
-        if (activeWorkbenches.containsKey(loc)) {
-            ItemDisplay display = activeWorkbenches.remove(loc);
-            if (display != null && display.isValid()) {
-                display.remove();
-            }
+        if (activeWorkbenches.contains(loc)) {
+            activeWorkbenches.remove(loc);
 
             event.setDropItems(false);
             block.getWorld().dropItemNaturally(loc.add(0.5, 0.5, 0.5), getWorkbenchItem());
@@ -169,7 +146,7 @@ public class WorkbenchManager implements Listener {
         if (block == null) return;
 
         Location loc = block.getLocation();
-        if (activeWorkbenches.containsKey(loc)) {
+        if (activeWorkbenches.contains(loc)) {
             event.setCancelled(true);
             openWorkbenchGUI(event.getPlayer());
         }
