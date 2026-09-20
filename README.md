@@ -10,7 +10,7 @@
 
 ---
 
-## Apa itu Kryo ❓
+## What is Kryo ❓
 
 Kryo is a technology plugin that brings back the excitement of classic Slimefun-style mechanics. It is designed to transform the vanilla Minecraft experience into a sophisticated, feature-rich environment optimized for high performance—making it ideal for multiplayer survival (SMP) servers.
 
