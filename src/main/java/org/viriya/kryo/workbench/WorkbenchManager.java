@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.block.TileState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,22 +21,28 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.viriya.kryo.blueprint.BlueprintItem;
+import org.viriya.kryo.items.SieveManager;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class WorkbenchManager implements Listener {
 
     private static NamespacedKey workbenchKey;
-    private static final Set<Location> activeWorkbenches = new HashSet<>();
-    private static final Component GUI_TITLE = Component.text("Workbench", NamedTextColor.DARK_GRAY);
+    private static Plugin pluginInstance;
+    private static final Map<Location, Inventory> activeWorkbenchInventories = new HashMap<>();
+    private static final Map<String, ItemStack> registeredRecipes = new HashMap<>();
 
     public static void init(Plugin plugin) {
-        workbenchKey = new NamespacedKey(plugin, "custom_workbench");
+        pluginInstance = plugin;
+        if (workbenchKey == null) {
+            workbenchKey = new NamespacedKey(plugin, "custom_workbench");
+        }
         registerRecipe(plugin);
 
         ItemStack[] workbenchRecipe = {
@@ -43,112 +50,135 @@ public class WorkbenchManager implements Listener {
                 new ItemStack(Material.WOODEN_PICKAXE), new ItemStack(Material.CRAFTING_TABLE), new ItemStack(Material.WOODEN_SHOVEL),
                 null, new ItemStack(Material.WOODEN_HOE), null
         };
-
+        registerCustomRecipe(getWorkbenchItem(), workbenchRecipe);
         BlueprintItem.registerToGroup("MACHINE", getWorkbenchItem(), new ItemStack(Material.CRAFTING_TABLE), workbenchRecipe);
+
+        ItemStack[] sieveRecipe = {
+                null, null, null,
+                new ItemStack(Material.OAK_LOG), null, new ItemStack(Material.OAK_LOG),
+                new ItemStack(Material.OAK_LOG), new ItemStack(Material.OAK_LOG), new ItemStack(Material.OAK_LOG)
+        };
+        registerCustomRecipe(SieveManager.getSieveItem(), sieveRecipe);
+        BlueprintItem.registerToGroup("TOOLS", SieveManager.getSieveItem(), getWorkbenchItem(), sieveRecipe);
+    }
+
+    public static void registerCustomRecipe(ItemStack result, ItemStack[] grid) {
+        if (grid.length != 9) return;
+        String key = generateRecipeKey(grid);
+        registeredRecipes.put(key, result);
+    }
+
+    private static String generateRecipeKey(ItemStack[] grid) {
+        StringBuilder sb = new StringBuilder();
+        for (ItemStack item : grid) {
+            if (item == null || item.getType() == Material.AIR) {
+                sb.append("AIR,");
+            } else {
+                sb.append(item.getType().name()).append(":").append(item.getAmount()).append(",");
+            }
+        }
+        return sb.toString();
     }
 
     public static ItemStack getWorkbenchItem() {
-        ItemStack item = new ItemStack(Material.SMITHING_TABLE);
+        ItemStack item = new ItemStack(Material.BARREL);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text("Workbench"));
+            meta.displayName(Component.text("Workbench", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
             meta.lore(List.of(
-                    Component.text("Where the magic begins", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, true)
+                    Component.text("Where the magic begins", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
             ));
-            meta.getPersistentDataContainer().set(workbenchKey, PersistentDataType.BYTE, (byte) 1);
+            if (workbenchKey != null) {
+                meta.getPersistentDataContainer().set(workbenchKey, PersistentDataType.BYTE, (byte) 1);
+            }
             item.setItemMeta(meta);
         }
         return item;
     }
 
     public static boolean isCustomWorkbench(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return false;
+        if (item == null || !item.hasItemMeta() || workbenchKey == null) return false;
         ItemMeta meta = item.getItemMeta();
         Byte value = meta.getPersistentDataContainer().get(workbenchKey, PersistentDataType.BYTE);
         return value != null && value == 1;
     }
 
+    public static boolean isCustomWorkbenchBlock(Block block) {
+        if (block == null || block.getType() != Material.BARREL || workbenchKey == null) return false;
+        if (block.getState() instanceof TileState tileState) {
+            PersistentDataContainer pdc = tileState.getPersistentDataContainer();
+            Byte value = pdc.get(workbenchKey, PersistentDataType.BYTE);
+            return value != null && value == 1;
+        }
+        return false;
+    }
+
     private static void registerRecipe(Plugin plugin) {
         NamespacedKey recipeKey = new NamespacedKey(plugin, "workbench_recipe");
         ShapedRecipe recipe = new ShapedRecipe(recipeKey, getWorkbenchItem());
-
-        recipe.shape(
-                " A ",
-                "PCS",
-                " H "
-        );
-
+        recipe.shape(" A ", "PCS", " H ");
         recipe.setIngredient('A', Material.WOODEN_AXE);
         recipe.setIngredient('P', Material.WOODEN_PICKAXE);
         recipe.setIngredient('C', Material.CRAFTING_TABLE);
         recipe.setIngredient('S', Material.WOODEN_SHOVEL);
         recipe.setIngredient('H', Material.WOODEN_HOE);
-
         Bukkit.addRecipe(recipe);
     }
 
-    public static void openWorkbenchGUI(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 27, Component.text("Workbench", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true));
+    public static void openWorkbenchGUI(Player player, Location loc) {
+        Inventory gui = activeWorkbenchInventories.computeIfAbsent(loc, k -> {
+            Inventory newGui = Bukkit.createInventory(null, 27, Component.text("Workbench", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true));
 
-        ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta meta = border.getItemMeta();
-        if (meta != null) {
-            meta.displayName(GUI_TITLE);
-            border.setItemMeta(meta);
-        }
+            ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+            ItemMeta meta = border.getItemMeta();
+            if (meta != null) {
+                meta.displayName(Component.text(" "));
+                border.setItemMeta(meta);
+            }
 
-        for (int i = 0; i < 27; i++) {
-            boolean isBorder = false;
-            int row = i / 9;
-            int col = i % 9;
-
-            if (col == 0 || col >= 4) {
-                if (!(row == 1 && col == 6)) {
-                    isBorder = true;
+            for (int i = 0; i < 27; i++) {
+                if (isBorderSlot(i)) {
+                    newGui.setItem(i, border);
                 }
             }
-
-            if (isBorder) {
-                gui.setItem(i, border);
-            }
-        }
+            return newGui;
+        });
 
         player.openInventory(gui);
     }
 
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        ItemStack item = event.getItemInHand();
-        if (!isCustomWorkbench(item)) {
-            return;
+    private static boolean isBorderSlot(int i) {
+        int row = i / 9;
+        int col = i % 9;
+
+        if (col >= 1 && col <= 3) {
+            return false;
         }
 
-        activeWorkbenches.add(event.getBlockPlaced().getLocation());
-    }
-
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        Block block = event.getBlock();
-        Location loc = block.getLocation();
-
-        if (activeWorkbenches.contains(loc)) {
-            activeWorkbenches.remove(loc);
-
-            event.setDropItems(false);
-            block.getWorld().dropItemNaturally(loc.add(0.5, 0.5, 0.5), getWorkbenchItem());
+        if (row == 1 && col == 6) {
+            return false;
         }
+
+        return true;
     }
 
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
-        Block block = event.getClickedBlock();
-        if (block == null) return;
+    private static void updateCraftingOutput(Inventory inv) {
+        ItemStack[] grid = new ItemStack[9];
+        int idx = 0;
+        for (int r = 0; r < 3; r++) {
+            for (int c = 1; c <= 3; c++) {
+                int slot = r * 9 + c;
+                grid[idx++] = inv.getItem(slot);
+            }
+        }
 
-        Location loc = block.getLocation();
-        if (activeWorkbenches.contains(loc)) {
-            event.setCancelled(true);
-            openWorkbenchGUI(event.getPlayer());
+        String currentKey = generateRecipeKey(grid);
+        ItemStack result = registeredRecipes.get(currentKey);
+
+        if (result != null) {
+            inv.setItem(15, result.clone());
+        } else {
+            inv.setItem(15, null);
         }
     }
 
@@ -161,6 +191,88 @@ public class WorkbenchManager implements Listener {
         ItemStack clicked = event.getCurrentItem();
         if (clicked != null && clicked.getType() == Material.GRAY_STAINED_GLASS_PANE) {
             event.setCancelled(true);
+            return;
+        }
+
+        Inventory inv = event.getInventory();
+        int rawSlot = event.getRawSlot();
+
+        if (rawSlot == 15 && clicked != null && clicked.getType() != Material.AIR) {
+            event.setCancelled(true);
+
+            for (int r = 0; r < 3; r++) {
+                for (int c = 1; c <= 3; c++) {
+                    int slot = r * 9 + c;
+                    ItemStack ingredient = inv.getItem(slot);
+                    if (ingredient != null && ingredient.getType() != Material.AIR) {
+                        ingredient.setAmount(ingredient.getAmount() - 1);
+                        if (ingredient.getAmount() <= 0) {
+                            inv.setItem(slot, null);
+                        }
+                    }
+                }
+            }
+
+            HashMap<Integer, ItemStack> leftover = event.getWhoClicked().getInventory().addItem(clicked.clone());
+            for (ItemStack drop : leftover.values()) {
+                event.getWhoClicked().getWorld().dropItemNaturally(event.getWhoClicked().getLocation(), drop);
+            }
+
+            inv.setItem(15, null);
+            updateCraftingOutput(inv);
+            return;
+        }
+
+        if (pluginInstance != null) {
+            Bukkit.getScheduler().runTaskLater(pluginInstance, () -> updateCraftingOutput(inv), 1L);
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        ItemStack item = event.getItemInHand();
+        if (!isCustomWorkbench(item)) return;
+
+        Block block = event.getBlockPlaced();
+        if (block.getState() instanceof TileState tileState && workbenchKey != null) {
+            tileState.getPersistentDataContainer().set(workbenchKey, PersistentDataType.BYTE, (byte) 1);
+            tileState.update();
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        if (!isCustomWorkbenchBlock(block)) return;
+
+        Location loc = block.getLocation();
+        event.setDropItems(false);
+
+        Inventory gui = activeWorkbenchInventories.remove(loc);
+        if (gui != null) {
+            for (int i = 0; i < gui.getSize(); i++) {
+                ItemStack item = gui.getItem(i);
+                if (item != null && item.getType() != Material.GRAY_STAINED_GLASS_PANE) {
+                    block.getWorld().dropItemNaturally(loc.clone().add(0.5, 0.5, 0.5), item);
+                }
+            }
+        }
+
+        block.getWorld().dropItemNaturally(loc.add(0.5, 0.5, 0.5), getWorkbenchItem());
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        Block block = event.getClickedBlock();
+        if (block == null) return;
+
+        if (isCustomWorkbenchBlock(block)) {
+            event.setCancelled(true);
+            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+
+            openWorkbenchGUI(event.getPlayer(), block.getLocation());
         }
     }
 }

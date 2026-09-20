@@ -5,10 +5,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.viriya.kryo.api.KryoRegistry;
 import org.viriya.kryo.blueprint.BlueprintGroup;
+import org.viriya.kryo.blueprint.BlueprintItem;
 import org.viriya.kryo.commands.KryoCommand;
+import org.viriya.kryo.items.DustManager;
+import org.viriya.kryo.items.SieveManager;
 import org.viriya.kryo.listeners.BlueprintClickListener;
 import org.viriya.kryo.listeners.BlueprintListener;
 import org.viriya.kryo.listeners.PlayerJoinListener;
@@ -23,8 +27,14 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
 
         registerGroups();
+
+        SieveManager.init(this);
+        getServer().getPluginManager().registerEvents(new SieveManager(), this);
+
         WorkbenchManager.init(this);
         getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
+
+        DustManager.init(this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
