@@ -36,7 +36,9 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
 
         DustManager.init(this);
+
         DynamiteManager.init(this);
+        getServer().getPluginManager().registerEvents(new DynamiteManager(), this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
@@ -55,6 +57,7 @@ public final class Kryo extends JavaPlugin {
 
         BlueprintGroup resourcesGroup = new BlueprintGroup("RESOURCES", Material.OAK_SAPLING, Component.text("Resources", NamedTextColor.GREEN));
         BlueprintGroup toolsGroup = new BlueprintGroup("TOOLS", Material.IRON_PICKAXE, Component.text("Tools", NamedTextColor.WHITE));
+        BlueprintGroup miscGroup = new BlueprintGroup("MISC", Material.BUCKET, Component.text("Misc", NamedTextColor.WHITE));
 
         KryoRegistry.registerGroup(machineGroup);
         KryoRegistry.registerGroup(toolsGroup);

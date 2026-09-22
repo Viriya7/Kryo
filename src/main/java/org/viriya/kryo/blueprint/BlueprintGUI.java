@@ -58,7 +58,7 @@ public class BlueprintGUI implements Listener {
 
     public static void openGroupMenu(Player player, BlueprintGroup group) {
         openSubMenus.put(player.getUniqueId(), group);
-        Component title = group.getName().decoration(TextDecoration.BOLD, true);
+        Component title = group.getName().decoration(TextDecoration.BOLD, false);
         Inventory gui = Bukkit.createInventory(null, 54, title);
 
         ItemStack border = createGuiItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "));

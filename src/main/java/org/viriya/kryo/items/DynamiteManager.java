@@ -9,29 +9,50 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.type.Candle;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 import org.viriya.kryo.blueprint.BlueprintItem;
 import org.viriya.kryo.workbench.WorkbenchManager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class DynamiteManager implements Listener {
 
     private static NamespacedKey dynamiteKey;
     private static Plugin pluginInstance;
+    private static final Map<String, DynamiteData> activeCountdowns = new HashMap<>();
 
-    private static final Map<String, ArmorStand> activeCountdowns = new HashMap<>();
+    private static class DynamiteData {
+        int ticksLeft;
+        UUID placerUUID;
+        UUID displayUUID;
+        UUID hologramUUID;
+
+        DynamiteData(int ticksLeft, UUID placerUUID, UUID displayUUID, UUID hologramUUID) {
+            this.ticksLeft = ticksLeft;
+            this.placerUUID = placerUUID;
+            this.displayUUID = displayUUID;
+            this.hologramUUID = hologramUUID;
+        }
+    }
 
     public static void init(Plugin plugin) {
         pluginInstance = plugin;
@@ -53,12 +74,12 @@ public class DynamiteManager implements Listener {
     }
 
     public static ItemStack getDynamiteItem() {
-        ItemStack item = new ItemStack(Material.RED_CANDLE);
+        ItemStack item = new ItemStack(Material.RED_CANDLE, 1);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text("Dynamite", NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
+            meta.displayName(Component.text("Dynamite", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
             if (dynamiteKey != null) {
-                meta.getPersistentDataContainer().set(dynamiteKey, PersistentDataType.BYTE, (byte) 1);
+                meta.getPersistentDataContainer().set(dynamiteKey, PersistentDataType.LONG, System.nanoTime());
             }
             item.setItemMeta(meta);
         }
@@ -68,99 +89,127 @@ public class DynamiteManager implements Listener {
     public static boolean isCustomDynamite(ItemStack item) {
         if (item == null || !item.hasItemMeta() || dynamiteKey == null) return false;
         ItemMeta meta = item.getItemMeta();
-        Byte value = meta.getPersistentDataContainer().get(dynamiteKey, PersistentDataType.BYTE);
-        return value != null && value == 1;
+        return meta.getPersistentDataContainer().has(dynamiteKey, PersistentDataType.LONG);
     }
 
     @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        ItemStack item = event.getItemInHand();
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
+
+        ItemStack item = event.getItem();
         if (!isCustomDynamite(item)) return;
 
-        Block block = event.getBlockPlaced();
-        if (block.getType() != Material.RED_CANDLE) return;
+        event.setCancelled(true);
 
-        String locKey = block.getWorld().getName() + "," + block.getX() + "," + block.getY() + "," + block.getZ();
+        Block clickedBlock = event.getClickedBlock();
+        BlockFace face = event.getBlockFace();
+        if (clickedBlock == null) return;
+
+        Location targetLoc = clickedBlock.getRelative(face).getLocation();
+        String locKey = targetLoc.getWorld().getName() + "," + targetLoc.getBlockX() + "," + targetLoc.getBlockY() + "," + targetLoc.getBlockZ();
         if (activeCountdowns.containsKey(locKey)) return;
 
-        Bukkit.getScheduler().runTaskLater(pluginInstance, () -> {
-            if (block.getType() == Material.RED_CANDLE) {
-                if (block.getBlockData() instanceof Candle candle) {
-                    candle.setLit(true);
-                    block.setBlockData(candle);
-                }
+        Player player = event.getPlayer();
+        if (item.getAmount() > 1) {
+            item.setAmount(item.getAmount() - 1);
+        } else {
+            player.getInventory().setItemInMainHand(null);
+        }
 
-                Location centerLoc = block.getLocation().add(0.5, 0.0, 0.5);
-                block.getWorld().playSound(centerLoc, Sound.ENTITY_TNT_PRIMED, 1.0f, 1.0f);
+        Location displayLoc = targetLoc.clone().add(0.5, 0.0, 0.5);
 
-                ArmorStand hologram = (ArmorStand) block.getWorld().spawnEntity(centerLoc.clone().add(0, 0.3, 0), EntityType.ARMOR_STAND);
-                hologram.setVisible(false);
-                hologram.setGravity(false);
-                hologram.setMarker(true);
-                hologram.setCustomNameVisible(true);
+        BlockDisplay display = targetLoc.getWorld().spawn(displayLoc, BlockDisplay.class, entity -> {
+            entity.setBlock(Bukkit.createBlockData(Material.RED_CANDLE));
+            entity.setTransformation(new Transformation(
+                    new Vector3f(-0.25f, 0.0f, -0.25f),
+                    new AxisAngle4f(0.0f, 0.0f, 0.0f, 1.0f),
+                    new Vector3f(0.5f, 0.5f, 0.5f),
+                    new AxisAngle4f(0.0f, 0.0f, 0.0f, 1.0f)
+            ));
+        });
 
-                activeCountdowns.put(locKey, hologram);
+        Location holoLoc = targetLoc.clone().add(0.5, 0.6, 0.5);
+        TextDisplay hologram = targetLoc.getWorld().spawn(holoLoc, TextDisplay.class, entity -> {
+            entity.text(Component.text("3.0s", NamedTextColor.GRAY, TextDecoration.BOLD));
+            entity.setBillboard(Display.Billboard.CENTER);
+            entity.setShadowed(true);
+        });
 
-                startSmoothCountdown(block, hologram, locKey, 60);
-            }
-        }, 1L);
+        targetLoc.getWorld().playSound(targetLoc.clone().add(0.5, 0.5, 0.5), Sound.ENTITY_TNT_PRIMED, 1.0f, 1.0f);
+
+        activeCountdowns.put(locKey, new DynamiteData(60, player.getUniqueId(), display.getUniqueId(), hologram.getUniqueId()));
+        startCountdown(targetLoc, locKey);
     }
 
-    private static void startSmoothCountdown(Block block, ArmorStand hologram, String locKey, int ticksLeft) {
-        if (pluginInstance == null) return;
+    @EventHandler
+    public void onPlayerPunch(PlayerInteractEvent event) {
+        if (event.getAction() != Action.LEFT_CLICK_BLOCK && event.getAction() != Action.LEFT_CLICK_AIR) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
 
-        if (ticksLeft > 0) {
-            if (block.getType() == Material.RED_CANDLE) {
-                int seconds = ticksLeft / 20;
-                int tenths = (ticksLeft % 20) * 10 / 20;
-                String timeText = "§c[ " + seconds + "." + tenths + "s ]";
+        Block clickedBlock = event.getClickedBlock();
+        Location loc;
 
-                hologram.setCustomName(timeText);
-
-                Bukkit.getScheduler().runTaskLater(pluginInstance, () -> {
-                    startSmoothCountdown(block, hologram, locKey, ticksLeft - 2);
-                }, 2L);
-            } else {
-                hologram.remove();
-                activeCountdowns.remove(locKey);
-            }
+        if (clickedBlock != null) {
+            loc = clickedBlock.getLocation();
         } else {
-            hologram.remove();
-            activeCountdowns.remove(locKey);
+            Player p = event.getPlayer();
+            Block target = p.getTargetBlockExact(5);
+            if (target == null) return;
+            loc = target.getLocation();
+        }
 
-            Location loc = block.getLocation().add(0.5, 0.5, 0.5);
+        String locKey = loc.getWorld().getName() + "," + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ();
 
-            int candleCount = 1;
-            if (block.getBlockData() instanceof Candle candleData) {
-                candleCount = candleData.getCandles();
+        if (activeCountdowns.containsKey(locKey)) {
+            DynamiteData data = activeCountdowns.remove(locKey);
+            if (data != null) {
+                Entity displayEntity = Bukkit.getEntity(data.displayUUID);
+                if (displayEntity != null) displayEntity.remove();
+
+                Entity holoEntity = Bukkit.getEntity(data.hologramUUID);
+                if (holoEntity != null) holoEntity.remove();
             }
 
-            block.setType(Material.AIR);
+            event.setCancelled(true);
 
-            float explosionPower = 1.0f + (candleCount * 0.6f);
-            loc.getWorld().createExplosion(loc, explosionPower, true, true);
+            ItemStack dropItem = getDynamiteItem();
+            loc.getWorld().dropItemNaturally(loc.clone().add(0.5, 0.5, 0.5), dropItem);
         }
     }
 
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        Block block = event.getBlock();
-        if (block.getType() == Material.RED_CANDLE) {
-            String locKey = block.getWorld().getName() + "," + block.getX() + "," + block.getY() + "," + block.getZ();
-            if (activeCountdowns.containsKey(locKey)) {
-                activeCountdowns.get(locKey).remove();
-                activeCountdowns.remove(locKey);
+    private static void startCountdown(Location loc, String locKey) {
+        if (pluginInstance == null || !activeCountdowns.containsKey(locKey)) return;
+
+        DynamiteData data = activeCountdowns.get(locKey);
+
+        if (data.ticksLeft > 0) {
+            int seconds = data.ticksLeft / 20;
+            int tenths = (data.ticksLeft % 20) * 10 / 20;
+
+            NamedTextColor textColor = (data.ticksLeft <= 20) ? NamedTextColor.RED : NamedTextColor.GRAY;
+            Component text = Component.text(seconds + "." + tenths + "s", textColor, TextDecoration.BOLD);
+
+            Entity holoEntity = Bukkit.getEntity(data.hologramUUID);
+            if (holoEntity instanceof TextDisplay textDisplay) {
+                textDisplay.text(text);
             }
 
-            int count = 1;
-            if (block.getBlockData() instanceof Candle candle) {
-                count = candle.getCandles();
+            data.ticksLeft -= 2;
+
+            Bukkit.getScheduler().runTaskLater(pluginInstance, () -> startCountdown(loc, locKey), 2L);
+        } else {
+            DynamiteData finishedData = activeCountdowns.remove(locKey);
+            if (finishedData != null) {
+                Entity displayEntity = Bukkit.getEntity(finishedData.displayUUID);
+                if (displayEntity != null) displayEntity.remove();
+
+                Entity holoEntity = Bukkit.getEntity(finishedData.hologramUUID);
+                if (holoEntity != null) holoEntity.remove();
             }
 
-            event.setDropItems(false);
-            ItemStack dropItem = getDynamiteItem();
-            dropItem.setAmount(count);
-            block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), dropItem);
+            Location centerLoc = loc.clone().add(0.5, 0.5, 0.5);
+            centerLoc.getWorld().createExplosion(centerLoc, 2.5f, true, true);
         }
     }
 }
