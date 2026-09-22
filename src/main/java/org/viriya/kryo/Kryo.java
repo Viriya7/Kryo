@@ -14,6 +14,7 @@ import org.viriya.kryo.commands.KryoCommand;
 import org.viriya.kryo.items.DustManager;
 import org.viriya.kryo.items.DynamiteManager;
 import org.viriya.kryo.items.SieveManager;
+import org.viriya.kryo.items.IngotManager;
 import org.viriya.kryo.listeners.BlueprintClickListener;
 import org.viriya.kryo.listeners.BlueprintListener;
 import org.viriya.kryo.listeners.PlayerJoinListener;
@@ -39,6 +40,9 @@ public final class Kryo extends JavaPlugin {
 
         DynamiteManager.init(this);
         getServer().getPluginManager().registerEvents(new DynamiteManager(), this);
+
+        IngotManager.init(this);
+        getServer().getPluginManager().registerEvents(new IngotManager(), this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
