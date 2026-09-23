@@ -19,6 +19,7 @@ import org.viriya.kryo.listeners.BlueprintClickListener;
 import org.viriya.kryo.listeners.BlueprintListener;
 import org.viriya.kryo.listeners.PlayerJoinListener;
 import org.viriya.kryo.workbench.WorkbenchManager;
+import org.viriya.kryo.smeltry.SmeltryManager;
 
 public final class Kryo extends JavaPlugin {
 
@@ -43,6 +44,9 @@ public final class Kryo extends JavaPlugin {
 
         IngotManager.init(this);
         getServer().getPluginManager().registerEvents(new IngotManager(), this);
+
+        SmeltryManager.init(this);
+        getServer().getPluginManager().registerEvents(new SmeltryManager(), this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
