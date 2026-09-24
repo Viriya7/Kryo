@@ -29,5 +29,14 @@ Kryo is a technology plugin that brings back the excitement of classic Slimefun-
 
 ## Roadmap & Updates
 
+TARGET RELEASE V1.0.0 ‼‼‼
 
+---
 
+### Before Messing with Villager
+
+<img width="500" alt="gambar" src="https://github.com/user-attachments/assets/bca19a22-56ea-417c-972f-243633c59eee" />
+
+### After Messing with Villager
+
+<img width="500" alt="gambar" src="https://github.com/user-attachments/assets/4163c8c5-2695-4c15-8869-060a7fc3dbd8" />
