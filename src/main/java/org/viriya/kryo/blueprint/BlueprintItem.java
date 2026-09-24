@@ -55,7 +55,7 @@ public class BlueprintItem {
             }
         }
 
-        Component title = Component.text("Blueprint", NamedTextColor.BLUE).decoration(TextDecoration.BOLD, false);
+        Component title = Component.text("Blueprint > " + itemName, NamedTextColor.BLUE).decoration(TextDecoration.BOLD, true);
         Inventory gui = Bukkit.createInventory(null, 27, title);
 
         ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
