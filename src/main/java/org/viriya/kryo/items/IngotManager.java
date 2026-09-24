@@ -14,6 +14,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.viriya.kryo.blueprint.BlueprintItem;
 import org.viriya.kryo.items.SieveManager;
+import org.viriya.kryo.smeltry.SmeltryManager;
 import org.viriya.kryo.workbench.WorkbenchManager;
 
 public class IngotManager implements Listener {
@@ -78,8 +79,7 @@ public class IngotManager implements Listener {
     private static void registerIngotRecipes() {
         if (pluginInstance == null) return;
 
-        ItemStack sieveStation = SieveManager.getSieveItem();
-        ItemStack workbenchStation = WorkbenchManager.getWorkbenchItem();
+        ItemStack smeltryStation = SmeltryManager.getSmeltryItem();
 
         ItemStack copperIngot = getCopperIngot();
         ItemStack[] copperRecipe = {
@@ -87,7 +87,7 @@ public class IngotManager implements Listener {
                 null, DustManager.createDust("Copper Dust", Material.GLOWSTONE_DUST, "copper_dust"), null,
                 null, null, null
         };
-        BlueprintItem.registerToGroup("RESOURCES", copperIngot, sieveStation, copperRecipe);
+        BlueprintItem.registerToGroup("RESOURCES", copperIngot, smeltryStation, copperRecipe);
 
         ItemStack leadIngot = getLeadIngot();
         ItemStack[] leadRecipe = {
@@ -95,7 +95,7 @@ public class IngotManager implements Listener {
                 null, DustManager.createDust("Lead Dust", Material.SUGAR, "lead_dust"), null,
                 null, null, null
         };
-        BlueprintItem.registerToGroup("RESOURCES", leadIngot, sieveStation, leadRecipe);
+        BlueprintItem.registerToGroup("RESOURCES", leadIngot, smeltryStation, leadRecipe);
 
         ItemStack tinIngot = getTinIngot();
         ItemStack[] tinRecipe = {
@@ -103,7 +103,7 @@ public class IngotManager implements Listener {
                 null, DustManager.createDust("Tin Dust", Material.SUGAR, "tin_dust"), null,
                 null, null, null
         };
-        BlueprintItem.registerToGroup("RESOURCES", tinIngot, sieveStation, tinRecipe);
+        BlueprintItem.registerToGroup("RESOURCES", tinIngot, smeltryStation, tinRecipe);
 
         ItemStack goldDust = DustManager.createDust("Gold Dust", Material.GLOWSTONE_DUST, "gold_dust");
 
@@ -127,7 +127,7 @@ public class IngotManager implements Listener {
             }
 
             WorkbenchManager.registerCustomRecipe(targetResult, recipe);
-            BlueprintItem.registerToGroup("RESOURCES", targetResult, workbenchStation, recipe);
+            BlueprintItem.registerToGroup("RESOURCES", targetResult, smeltryStation, recipe);
         }
     }
 

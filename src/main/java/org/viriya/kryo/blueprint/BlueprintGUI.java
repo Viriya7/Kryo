@@ -21,8 +21,8 @@ import java.util.UUID;
 
 public class BlueprintGUI implements Listener {
 
-    private static final Component MAIN_TITLE = Component.text("Blueprint", NamedTextColor.BLUE).decoration(TextDecoration.BOLD, true);
-    private static final Component SETTINGS_TITLE = Component.text("Settings", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true);
+    private static final Component MAIN_TITLE = Component.text("Blueprint", NamedTextColor.BLUE).decoration(TextDecoration.BOLD, false);
+    private static final Component SETTINGS_TITLE = Component.text("Settings", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, false);
 
     private static final Map<UUID, BlueprintGroup> openSubMenus = new HashMap<>();
 
@@ -73,7 +73,7 @@ public class BlueprintGUI implements Listener {
             }
         }
 
-        gui.setItem(52, backButton);
+        gui.setItem(1, backButton);
 
         List<ItemStack> items = group.getItems();
         int slotIndex = 9;

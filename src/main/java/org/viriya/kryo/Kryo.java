@@ -31,22 +31,20 @@ public final class Kryo extends JavaPlugin {
 
         registerGroups();
 
-        SieveManager.init(this);
-        getServer().getPluginManager().registerEvents(new SieveManager(), this);
-
         WorkbenchManager.init(this);
-        getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
+        SmeltryManager.init(this);
 
+        SieveManager.init(this);
         DustManager.init(this);
-
         DynamiteManager.init(this);
-        getServer().getPluginManager().registerEvents(new DynamiteManager(), this);
-
         IngotManager.init(this);
+
+        getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
+        getServer().getPluginManager().registerEvents(new SmeltryManager(), this);
+        getServer().getPluginManager().registerEvents(new SieveManager(), this);
+        getServer().getPluginManager().registerEvents(new DynamiteManager(), this);
         getServer().getPluginManager().registerEvents(new IngotManager(), this);
 
-        SmeltryManager.init(this);
-        getServer().getPluginManager().registerEvents(new SmeltryManager(), this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {

@@ -74,7 +74,7 @@ public class WorkbenchManager implements Listener {
             if (item == null || item.getType() == Material.AIR) {
                 sb.append("AIR,");
             } else {
-                sb.append(item.getType().name()).append(":").append(item.getAmount()).append(",");
+                sb.append(item.getType().name()).append(",");
             }
         }
         return sb.toString();
@@ -127,7 +127,7 @@ public class WorkbenchManager implements Listener {
 
     public static void openWorkbenchGUI(Player player, Location loc) {
         Inventory gui = activeWorkbenchInventories.computeIfAbsent(loc, k -> {
-            Inventory newGui = Bukkit.createInventory(null, 27, Component.text("Workbench", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true));
+            Inventory newGui = Bukkit.createInventory(null, 27, Component.text("Workbench", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, false));
 
             ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
             ItemMeta meta = border.getItemMeta();
@@ -184,7 +184,7 @@ public class WorkbenchManager implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getView().title().equals(Component.text("Workbench", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true))) {
+        if (!event.getView().title().equals(Component.text("Workbench", NamedTextColor.DARK_GRAY).decoration(TextDecoration.BOLD, false))) {
             return;
         }
 
@@ -219,7 +219,10 @@ public class WorkbenchManager implements Listener {
             }
 
             inv.setItem(15, null);
-            updateCraftingOutput(inv);
+
+            if (pluginInstance != null) {
+                Bukkit.getScheduler().runTaskLater(pluginInstance, () -> updateCraftingOutput(inv), 1L);
+            }
             return;
         }
 

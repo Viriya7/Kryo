@@ -103,7 +103,7 @@ public class SmeltryManager implements Listener {
         };
 
         WorkbenchManager.registerCustomRecipe(result, recipe);
-        BlueprintItem.registerToGroup("MACHINES", result, workbenchStation, recipe);
+        BlueprintItem.registerToGroup("MACHINE", result, workbenchStation, recipe);
     }
 
     @EventHandler
