@@ -180,38 +180,44 @@ public class BulletManager implements Listener {
     }
 
     @EventHandler
-    public void onEntityDamage(EntityDamageByEntityEvent event) {
+    public void onProjectileHit(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof org.bukkit.entity.Projectile)) return;
+        org.bukkit.entity.Projectile projectile = (org.bukkit.entity.Projectile) event.getDamager();
+
+        if (!(projectile.getShooter() instanceof org.bukkit.entity.Player)) return;
+
         Entity victim = event.getEntity();
         if (!(victim instanceof LivingEntity)) return;
         LivingEntity livingVictim = (LivingEntity) victim;
 
-        if (event.getDamager() instanceof org.bukkit.entity.Player) {
-            org.bukkit.entity.Player player = (org.bukkit.entity.Player) event.getDamager();
-            ItemStack itemInHand = player.getInventory().getItemInMainHand();
+        org.bukkit.entity.Player shooter = (org.bukkit.entity.Player) projectile.getShooter();
+        ItemStack itemInHand = shooter.getInventory().getItemInMainHand();
 
-            TipType type = getTipType(itemInHand);
-            if (type == null) return;
+        TipType type = getTipType(itemInHand);
+        if (type == null) {
+            type = BulletAssemblyManager.getAssembledBulletType(itemInHand);
+        }
+        if (type == null) return;
 
-            switch (type) {
-                case GOLD:
-                    livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.GLOWING, 1200, 0, false, true));
-                    break;
-                case COPPER:
-                    livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WITHER, 200, 0, false, true));
-                    break;
-                case TIN:
-                    livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOW, 60, 255, false, true));
-                    break;
-                case IRON:
-                    event.setDamage(event.getDamage() * 2);
-                    break;
-                case MERCURY:
-                    livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.POISON, 1200, 0, false, true));
-                    break;
-                case LEAD:
-                default:
-                    break;
-            }
+        switch (type) {
+            case GOLD:
+                livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.GLOWING, 1200, 0, false, true));
+                break;
+            case COPPER:
+                livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.WITHER, 200, 0, false, true));
+                break;
+            case TIN:
+                livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.SLOW, 60, 255, false, true));
+                break;
+            case IRON:
+                event.setDamage(event.getDamage() * 2);
+                break;
+            case MERCURY:
+                livingVictim.addPotionEffect(new org.bukkit.potion.PotionEffect(org.bukkit.potion.PotionEffectType.POISON, 1200, 0, false, true));
+                break;
+            case LEAD:
+            default:
+                break;
         }
     }
 }
