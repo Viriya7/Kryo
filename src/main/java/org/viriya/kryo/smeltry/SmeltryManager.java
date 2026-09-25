@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.viriya.kryo.blueprint.BlueprintItem;
 import org.viriya.kryo.items.DustManager;
 import org.viriya.kryo.items.IngotManager;
+import org.viriya.kryo.items.MercuryManager;
 import org.viriya.kryo.workbench.WorkbenchManager;
 
 import java.util.Base64;
@@ -129,7 +130,6 @@ public class SmeltryManager implements Listener {
                     Location loc = block.getLocation();
 
                     event.setDropItems(false);
-
                     block.getWorld().dropItemNaturally(loc, getSmeltryItem());
 
                     Inventory inv = smeltryInventories.remove(loc);
@@ -342,7 +342,7 @@ public class SmeltryManager implements Listener {
         ItemStack sourceItem = null;
         for (int slot : INPUT_SLOTS) {
             ItemStack item = inv.getItem(slot);
-            if (item != null && (DustManager.isCustomDust(item) || isKaratGoldIngot(item))) {
+            if (item != null && (DustManager.isCustomDust(item) || isKaratGoldIngot(item) || MercuryManager.isCustomCinnabar(item))) {
                 targetInputSlot = slot;
                 sourceItem = item;
                 break;
@@ -406,6 +406,11 @@ public class SmeltryManager implements Listener {
     }
 
     private static SmeltResult getSmeltResult(Inventory inv, int primarySlot, ItemStack sourceItem) {
+        // Cek jika inputnya adalah Cinnabar
+        if (MercuryManager.isCustomCinnabar(sourceItem)) {
+            return new SmeltResult(MercuryManager.getMercury(), -1);
+        }
+
         if (isKaratGoldIngot(sourceItem)) {
             int currentKarat = getKaratValue(sourceItem);
             if (currentKarat < 24) {

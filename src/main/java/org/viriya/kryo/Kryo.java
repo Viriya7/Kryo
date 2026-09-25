@@ -35,9 +35,9 @@ public final class Kryo extends JavaPlugin {
         IngotManager.init(this);
 
         GrapplingHookManager.init(this);
+        MercuryManager.init(this);
 
         WorkbenchManager.init(this);
-
 
         getServer().getPluginManager().registerEvents(new WorkbenchManager(), this);
         getServer().getPluginManager().registerEvents(new SmeltryManager(), this);
@@ -45,6 +45,7 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DynamiteManager(), this);
         getServer().getPluginManager().registerEvents(new IngotManager(), this);
         getServer().getPluginManager().registerEvents(new GrapplingHookManager(), this);
+        getServer().getPluginManager().registerEvents(new MercuryManager(),this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
