@@ -55,19 +55,17 @@ public final class Kryo extends JavaPlugin {
     private void registerGroups() {
         String machineTexture = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMmNkYzBmZWI3MDAxZTJjMTBmZDUwNjZlNTAxYjg3ZTNkNjQ3OTMwOTJiODVhNTBjODU2ZDk2MmY4YmU5MmM3OCJ9fX0=";
 
-        BlueprintGroup machineGroup = new BlueprintGroup(
-                "MACHINE",
-                machineTexture,
-                Component.text("Machine", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
-        );
-
+        BlueprintGroup machineGroup = new BlueprintGroup("MACHINE", machineTexture, Component.text("Machine", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
         BlueprintGroup resourcesGroup = new BlueprintGroup("RESOURCES", Material.OAK_SAPLING, Component.text("Resources", NamedTextColor.GREEN));
         BlueprintGroup toolsGroup = new BlueprintGroup("TOOLS", Material.IRON_PICKAXE, Component.text("Tools", NamedTextColor.WHITE));
         BlueprintGroup miscGroup = new BlueprintGroup("MISC", Material.BUCKET, Component.text("Misc", NamedTextColor.WHITE));
+        BlueprintGroup FirearmGroup = new BlueprintGroup("FIREARM", Material.STONE_HOE, Component.text("Firearm", NamedTextColor.RED), "MISC");
 
         KryoRegistry.registerGroup(machineGroup);
         KryoRegistry.registerGroup(toolsGroup);
         KryoRegistry.registerGroup(resourcesGroup);
+        KryoRegistry.registerGroup(miscGroup);
+        KryoRegistry.registerGroup(FirearmGroup);
     }
 
     @Override

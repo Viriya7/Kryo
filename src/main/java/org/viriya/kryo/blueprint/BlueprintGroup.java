@@ -21,6 +21,7 @@ public class BlueprintGroup {
     private final Material icon;
     private final String base64Texture;
     private final Component name;
+    private final String parentId;
     private final List<ItemStack> items = new ArrayList<>();
 
     public BlueprintGroup(String id, Material icon, Component name) {
@@ -28,6 +29,7 @@ public class BlueprintGroup {
         this.icon = icon;
         this.base64Texture = null;
         this.name = name;
+        this.parentId = null;
     }
 
     public BlueprintGroup(String id, String base64Texture, Component name) {
@@ -35,6 +37,23 @@ public class BlueprintGroup {
         this.icon = Material.PLAYER_HEAD;
         this.base64Texture = base64Texture;
         this.name = name;
+        this.parentId = null;
+    }
+
+    public BlueprintGroup(String id, Material icon, Component name, String parentId) {
+        this.id = id;
+        this.icon = icon;
+        this.base64Texture = null;
+        this.name = name;
+        this.parentId = parentId;
+    }
+
+    public BlueprintGroup(String id, String base64Texture, Component name, String parentId) {
+        this.id = id;
+        this.icon = Material.PLAYER_HEAD;
+        this.base64Texture = base64Texture;
+        this.name = name;
+        this.parentId = parentId;
     }
 
     public String getId() {
@@ -47,6 +66,14 @@ public class BlueprintGroup {
 
     public Component getName() {
         return name;
+    }
+
+    public String getParentId() {
+        return parentId;
+    }
+
+    public boolean hasParent() {
+        return parentId != null && !parentId.isEmpty();
     }
 
     public List<ItemStack> getItems() {

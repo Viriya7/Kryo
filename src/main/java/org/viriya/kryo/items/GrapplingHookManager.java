@@ -113,7 +113,6 @@ public class GrapplingHookManager implements Listener {
 
             player.getWorld().playSound(targetLoc, Sound.ENTITY_LEASH_KNOT_PLACE, 1.0f, 1.0f);
 
-            // Warna cokelat tali lead asli menggunakan DustOptions
             Particle.DustOptions leadColor = new Particle.DustOptions(Color.fromRGB(115, 80, 50), 1.0f);
 
             new BukkitRunnable() {
@@ -132,7 +131,6 @@ public class GrapplingHookManager implements Listener {
                     for (double d = 0; d < distance; d += 0.5) {
                         Vector step = direction.clone().normalize().multiply(d);
                         Location particleLoc = pLoc.clone().add(step);
-                        // Menggunakan Particle.REDSTONE yang kompatibel dengan DustOptions
                         player.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 1, leadColor);
                     }
 

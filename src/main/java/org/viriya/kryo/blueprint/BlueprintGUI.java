@@ -50,7 +50,10 @@ public class BlueprintGUI implements Listener {
         int slotIndex = 9;
 
         for (int i = 0; i < groups.size() && slotIndex < 45; i++) {
-            gui.setItem(slotIndex++, groups.get(i).getIconItem());
+            BlueprintGroup group = groups.get(i);
+            if (!group.hasParent()) {
+                gui.setItem(slotIndex++, group.getIconItem());
+            }
         }
 
         player.openInventory(gui);
@@ -68,18 +71,49 @@ public class BlueprintGUI implements Listener {
             for (int x = 0; x < 9; x++) {
                 int slot = y * 9 + x;
                 if (y == 0 || y == 5) {
-                    gui.setItem(slot, border);
+                    if (y == 0 && x == 1) {
+                        gui.setItem(slot, backButton);
+                    } else {
+                        gui.setItem(slot, border);
+                    }
                 }
             }
         }
-
-        gui.setItem(52, backButton);
 
         List<ItemStack> items = group.getItems();
         int slotIndex = 9;
 
         for (int i = 0; i < items.size() && slotIndex < 45; i++) {
             gui.setItem(slotIndex++, items.get(i));
+        }
+
+        player.openInventory(gui);
+    }
+
+    public static void openSubGroupMenu(Player player, BlueprintGroup parentGroup, List<BlueprintGroup> subGroups) {
+        openSubMenus.put(player.getUniqueId(), parentGroup);
+        Component title = parentGroup.getName().decoration(TextDecoration.BOLD, false);
+        Inventory gui = Bukkit.createInventory(null, 54, title);
+
+        ItemStack border = createGuiItem(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "));
+        ItemStack backButton = createGuiItem(Material.BARRIER, Component.text("Back", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+
+        for (int y = 0; y < 6; y++) {
+            for (int x = 0; x < 9; x++) {
+                int slot = y * 9 + x;
+                if (y == 0 || y == 5) {
+                    if (y == 0 && x == 1) {
+                        gui.setItem(slot, backButton);
+                    } else {
+                        gui.setItem(slot, border);
+                    }
+                }
+            }
+        }
+
+        int slotIndex = 9;
+        for (int i = 0; i < subGroups.size() && slotIndex < 45; i++) {
+            gui.setItem(slotIndex++, subGroups.get(i).getIconItem());
         }
 
         player.openInventory(gui);
@@ -131,30 +165,63 @@ public class BlueprintGUI implements Listener {
             return;
         }
 
+        if (isSettings) {
+            if (clickedItem.getType() == Material.BARRIER && event.getRawSlot() == 26) {
+                openMenu(player);
+            }
+            return;
+        }
+
+        if (isSub && event.getRawSlot() == 1) {
+            BlueprintGroup currentGroup = openSubMenus.get(player.getUniqueId());
+            if (currentGroup != null && currentGroup.hasParent()) {
+                BlueprintGroup parentGroup = KryoRegistry.getGroup(currentGroup.getParentId());
+                if (parentGroup != null) {
+                    List<BlueprintGroup> subGroups = KryoRegistry.getSubGroups(parentGroup.getId());
+                    if (!subGroups.isEmpty()) {
+                        openSubGroupMenu(player, parentGroup, subGroups);
+                    } else {
+                        openGroupMenu(player, parentGroup);
+                    }
+                    return;
+                }
+            }
+            openMenu(player);
+            return;
+        }
+
         if (isMain) {
             if (clickedItem.getType() == Material.REPEATER) {
                 openSettings(player);
                 return;
             }
 
-            ItemMeta meta = clickedItem.getItemMeta();
-            if (meta == null || !meta.hasDisplayName()) return;
-
             for (BlueprintGroup group : KryoRegistry.getGroups()) {
-                Component groupName = group.getName();
-                Component itemDisplayName = meta.displayName();
-
-                if (group.getIconItem().isSimilar(clickedItem) ||
-                        (itemDisplayName != groupName && itemDisplayName != null && itemDisplayName.equals(groupName))) {
-                    openGroupMenu(player, group);
+                if (group.getIconItem().isSimilar(clickedItem)) {
+                    List<BlueprintGroup> subGroups = KryoRegistry.getSubGroups(group.getId());
+                    if (!subGroups.isEmpty()) {
+                        openSubGroupMenu(player, group, subGroups);
+                    } else {
+                        openGroupMenu(player, group);
+                    }
                     break;
                 }
             }
             return;
         }
 
-        if (clickedItem.getType() == Material.BARRIER) {
-            openMenu(player);
+        if (isSub && event.getRawSlot() >= 9 && event.getRawSlot() < 45) {
+            for (BlueprintGroup group : KryoRegistry.getGroups()) {
+                if (group.getIconItem().isSimilar(clickedItem)) {
+                    List<BlueprintGroup> subGroups = KryoRegistry.getSubGroups(group.getId());
+                    if (!subGroups.isEmpty()) {
+                        openSubGroupMenu(player, group, subGroups);
+                    } else {
+                        openGroupMenu(player, group);
+                    }
+                    break;
+                }
+            }
         }
     }
 }

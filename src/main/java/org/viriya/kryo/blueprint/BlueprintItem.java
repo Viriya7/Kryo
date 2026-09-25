@@ -47,15 +47,7 @@ public class BlueprintItem {
 
     @SuppressWarnings("unused")
     public static void openBlueprintRecipeGUI(Player player, ItemRecipe itemRecipe) {
-        String itemName = "Item";
-        if (itemRecipe.resultItem().hasItemMeta() && itemRecipe.resultItem().getItemMeta().hasDisplayName()) {
-            Component displayName = itemRecipe.resultItem().getItemMeta().displayName();
-            if (displayName != null) {
-                itemName = PlainTextComponentSerializer.plainText().serialize(displayName);
-            }
-        }
-
-        Component title = Component.text("Blueprint > " + itemName, NamedTextColor.BLUE).decoration(TextDecoration.BOLD, true);
+        Component title = Component.text("Blueprint", NamedTextColor.BLUE).decoration(TextDecoration.BOLD, false);
         Inventory gui = Bukkit.createInventory(null, 27, title);
 
         ItemStack border = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
@@ -72,7 +64,7 @@ public class BlueprintItem {
         ItemStack backButton = new ItemStack(Material.BARRIER);
         ItemMeta backMeta = backButton.getItemMeta();
         if (backMeta != null) {
-            backMeta.displayName(Component.text("Back", NamedTextColor.RED).decoration(TextDecoration.BOLD, true));
+            backMeta.displayName(Component.text("Back", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
             backButton.setItemMeta(backMeta);
         }
         gui.setItem(0, backButton);

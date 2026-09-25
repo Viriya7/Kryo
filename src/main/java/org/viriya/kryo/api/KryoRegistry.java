@@ -29,4 +29,14 @@ public class KryoRegistry {
     public static List<BlueprintGroup> getGroups() {
         return Collections.unmodifiableList(GROUPS);
     }
+
+    public static List<BlueprintGroup> getSubGroups(String parentId) {
+        List<BlueprintGroup> subGroups = new ArrayList<>();
+        for (BlueprintGroup group : GROUPS) {
+            if (group.hasParent() && group.getParentId().equalsIgnoreCase(parentId)) {
+                subGroups.add(group);
+            }
+        }
+        return subGroups;
+    }
 }
