@@ -30,13 +30,14 @@ import org.viriya.kryo.items.SieveManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class WorkbenchManager implements Listener {
 
     private static NamespacedKey workbenchKey;
     private static Plugin pluginInstance;
     private static final Map<Location, Inventory> activeWorkbenchInventories = new HashMap<>();
-    private static final Map<String, ItemStack> registeredRecipes = new HashMap<>();
+    private static final Map<String, Supplier<ItemStack>> registeredRecipeSuppliers = new HashMap<>();
 
     public static void init(Plugin plugin) {
         pluginInstance = plugin;
@@ -50,7 +51,7 @@ public class WorkbenchManager implements Listener {
                 new ItemStack(Material.WOODEN_PICKAXE), new ItemStack(Material.CRAFTING_TABLE), new ItemStack(Material.WOODEN_SHOVEL),
                 null, new ItemStack(Material.WOODEN_HOE), null
         };
-        registerCustomRecipe(getWorkbenchItem(), workbenchRecipe);
+        registerCustomRecipe(WorkbenchManager::getWorkbenchItem, workbenchRecipe);
         BlueprintItem.registerToGroup("MACHINE", getWorkbenchItem(), new ItemStack(Material.CRAFTING_TABLE), workbenchRecipe);
 
         ItemStack[] sieveRecipe = {
@@ -58,14 +59,20 @@ public class WorkbenchManager implements Listener {
                 new ItemStack(Material.OAK_LOG), null, new ItemStack(Material.OAK_LOG),
                 new ItemStack(Material.OAK_LOG), new ItemStack(Material.OAK_LOG), new ItemStack(Material.OAK_LOG)
         };
-        registerCustomRecipe(SieveManager.getSieveItem(), sieveRecipe);
+        registerCustomRecipe(SieveManager::getSieveItem, sieveRecipe);
         BlueprintItem.registerToGroup("TOOLS", SieveManager.getSieveItem(), getWorkbenchItem(), sieveRecipe);
+    }
+
+    public static void registerCustomRecipe(Supplier<ItemStack> resultSupplier, ItemStack[] grid) {
+        if (grid.length != 9) return;
+        String key = generateRecipeKey(grid);
+        registeredRecipeSuppliers.put(key, resultSupplier);
     }
 
     public static void registerCustomRecipe(ItemStack result, ItemStack[] grid) {
         if (grid.length != 9) return;
         String key = generateRecipeKey(grid);
-        registeredRecipes.put(key, result);
+        registeredRecipeSuppliers.put(key, () -> result);
     }
 
     private static String generateRecipeKey(ItemStack[] grid) {
@@ -173,10 +180,10 @@ public class WorkbenchManager implements Listener {
         }
 
         String currentKey = generateRecipeKey(grid);
-        ItemStack result = registeredRecipes.get(currentKey);
+        Supplier<ItemStack> supplier = registeredRecipeSuppliers.get(currentKey);
 
-        if (result != null) {
-            inv.setItem(15, result.clone());
+        if (supplier != null) {
+            inv.setItem(15, supplier.get());
         } else {
             inv.setItem(15, null);
         }
@@ -189,46 +196,64 @@ public class WorkbenchManager implements Listener {
         }
 
         ItemStack clicked = event.getCurrentItem();
-        if (clicked != null && clicked.getType() == Material.GRAY_STAINED_GLASS_PANE) {
-            event.setCancelled(true);
-            return;
-        }
-
         Inventory inv = event.getInventory();
         int rawSlot = event.getRawSlot();
 
-        if (rawSlot == 15 && clicked != null && clicked.getType() != Material.AIR) {
+        if (rawSlot == 15) {
             event.setCancelled(true);
+            if (clicked != null && clicked.getType() != Material.AIR) {
+                String currentKey = generateRecipeKey(getGridItems(inv));
+                Supplier<ItemStack> supplier = registeredRecipeSuppliers.get(currentKey);
+                if (supplier == null) return;
+                ItemStack actualResult = supplier.get();
 
-            for (int r = 0; r < 3; r++) {
-                for (int c = 1; c <= 3; c++) {
-                    int slot = r * 9 + c;
-                    ItemStack ingredient = inv.getItem(slot);
-                    if (ingredient != null && ingredient.getType() != Material.AIR) {
-                        ingredient.setAmount(ingredient.getAmount() - 1);
-                        if (ingredient.getAmount() <= 0) {
-                            inv.setItem(slot, null);
+                for (int r = 0; r < 3; r++) {
+                    for (int c = 1; c <= 3; c++) {
+                        int slot = r * 9 + c;
+                        ItemStack ingredient = inv.getItem(slot);
+                        if (ingredient != null && ingredient.getType() != Material.AIR) {
+                            ingredient.setAmount(ingredient.getAmount() - 1);
+                            if (ingredient.getAmount() <= 0) {
+                                inv.setItem(slot, null);
+                            }
                         }
                     }
                 }
-            }
 
-            HashMap<Integer, ItemStack> leftover = event.getWhoClicked().getInventory().addItem(clicked.clone());
-            for (ItemStack drop : leftover.values()) {
-                event.getWhoClicked().getWorld().dropItemNaturally(event.getWhoClicked().getLocation(), drop);
-            }
+                HashMap<Integer, ItemStack> leftover = event.getWhoClicked().getInventory().addItem(actualResult);
+                for (ItemStack drop : leftover.values()) {
+                    event.getWhoClicked().getWorld().dropItemNaturally(event.getWhoClicked().getLocation(), drop);
+                }
 
-            inv.setItem(15, null);
+                inv.setItem(15, null);
 
-            if (pluginInstance != null) {
-                Bukkit.getScheduler().runTaskLater(pluginInstance, () -> updateCraftingOutput(inv), 1L);
+                if (pluginInstance != null) {
+                    Bukkit.getScheduler().runTaskLater(pluginInstance, () -> updateCraftingOutput(inv), 1L);
+                }
             }
+            return;
+        }
+
+        if (clicked != null && clicked.getType() == Material.GRAY_STAINED_GLASS_PANE) {
+            event.setCancelled(true);
             return;
         }
 
         if (pluginInstance != null) {
             Bukkit.getScheduler().runTaskLater(pluginInstance, () -> updateCraftingOutput(inv), 1L);
         }
+    }
+
+    private static ItemStack[] getGridItems(Inventory inv) {
+        ItemStack[] grid = new ItemStack[9];
+        int idx = 0;
+        for (int r = 0; r < 3; r++) {
+            for (int c = 1; c <= 3; c++) {
+                int slot = r * 9 + c;
+                grid[idx++] = inv.getItem(slot);
+            }
+        }
+        return grid;
     }
 
     @EventHandler

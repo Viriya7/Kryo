@@ -11,10 +11,7 @@ import org.viriya.kryo.api.KryoRegistry;
 import org.viriya.kryo.blueprint.BlueprintGroup;
 import org.viriya.kryo.blueprint.BlueprintItem;
 import org.viriya.kryo.commands.KryoCommand;
-import org.viriya.kryo.items.DustManager;
-import org.viriya.kryo.items.DynamiteManager;
-import org.viriya.kryo.items.SieveManager;
-import org.viriya.kryo.items.IngotManager;
+import org.viriya.kryo.items.*;
 import org.viriya.kryo.listeners.BlueprintClickListener;
 import org.viriya.kryo.listeners.BlueprintListener;
 import org.viriya.kryo.listeners.PlayerJoinListener;
@@ -36,6 +33,9 @@ public final class Kryo extends JavaPlugin {
         DustManager.init(this);
         DynamiteManager.init(this);
         IngotManager.init(this);
+
+        GrapplingHookManager.init(this);
+
         WorkbenchManager.init(this);
 
 
@@ -44,6 +44,7 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SieveManager(), this);
         getServer().getPluginManager().registerEvents(new DynamiteManager(), this);
         getServer().getPluginManager().registerEvents(new IngotManager(), this);
+        getServer().getPluginManager().registerEvents(new GrapplingHookManager(), this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
