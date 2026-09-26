@@ -343,7 +343,7 @@ public class BulletAssemblyManager implements Listener {
 
         ItemStack resultStation = getAssemblyStation();
         WorkbenchManager.registerCustomRecipe(resultStation, stationGrid);
-        BlueprintItem.registerToGroup("FIREARM", resultStation, new ItemStack(Material.CRAFTING_TABLE), stationGrid);
+        BlueprintItem.registerToGroup("FIREARM", resultStation, WorkbenchManager.getWorkbenchItem(), stationGrid);
 
         BulletManager.TipType defaultType = BulletManager.TipType.LEAD;
         ItemStack[] blueprintGrid = new ItemStack[9];

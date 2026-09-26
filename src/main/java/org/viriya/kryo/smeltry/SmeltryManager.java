@@ -66,7 +66,7 @@ public class SmeltryManager implements Listener {
 
     private static final int INDICATOR_SLOT = 32;
 
-    private static final int TOTAL_TICKS = 60;
+    private static final int TOTAL_TICKS = 10;
 
     @SuppressWarnings("unused")
     public static void init(Plugin plugin) {

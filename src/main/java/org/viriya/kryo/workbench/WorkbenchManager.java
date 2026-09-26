@@ -10,6 +10,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.TileState;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -37,7 +38,9 @@ public class WorkbenchManager implements Listener {
     private static NamespacedKey workbenchKey;
     private static Plugin pluginInstance;
     private static final Map<Location, Inventory> activeWorkbenchInventories = new HashMap<>();
+
     private static final Map<String, Supplier<ItemStack>> registeredRecipeSuppliers = new HashMap<>();
+    private static final Map<String, Material[]> recipeGridMap = new HashMap<>();
 
     public static void init(Plugin plugin) {
         pluginInstance = plugin;
@@ -56,8 +59,8 @@ public class WorkbenchManager implements Listener {
 
         ItemStack[] sieveRecipe = {
                 null, null, null,
-                new ItemStack(Material.OAK_LOG), null, new ItemStack(Material.OAK_LOG),
-                new ItemStack(Material.OAK_LOG), new ItemStack(Material.OAK_LOG), new ItemStack(Material.OAK_LOG)
+                new ItemStack(Material.OAK_PLANKS), null, new ItemStack(Material.OAK_PLANKS),
+                new ItemStack(Material.OAK_PLANKS), new ItemStack(Material.OAK_PLANKS), new ItemStack(Material.OAK_PLANKS)
         };
         registerCustomRecipe(SieveManager::getSieveItem, sieveRecipe);
         BlueprintItem.registerToGroup("TOOLS", SieveManager.getSieveItem(), getWorkbenchItem(), sieveRecipe);
@@ -65,26 +68,17 @@ public class WorkbenchManager implements Listener {
 
     public static void registerCustomRecipe(Supplier<ItemStack> resultSupplier, ItemStack[] grid) {
         if (grid.length != 9) return;
-        String key = generateRecipeKey(grid);
+        Material[] mats = new Material[9];
+        for (int i = 0; i < 9; i++) {
+            mats[i] = (grid[i] == null) ? Material.AIR : grid[i].getType();
+        }
+        String key = "recipe_" + recipeGridMap.size();
+        recipeGridMap.put(key, mats);
         registeredRecipeSuppliers.put(key, resultSupplier);
     }
 
     public static void registerCustomRecipe(ItemStack result, ItemStack[] grid) {
-        if (grid.length != 9) return;
-        String key = generateRecipeKey(grid);
-        registeredRecipeSuppliers.put(key, () -> result);
-    }
-
-    private static String generateRecipeKey(ItemStack[] grid) {
-        StringBuilder sb = new StringBuilder();
-        for (ItemStack item : grid) {
-            if (item == null || item.getType() == Material.AIR) {
-                sb.append("AIR,");
-            } else {
-                sb.append(item.getType().name()).append(",");
-            }
-        }
-        return sb.toString();
+        registerCustomRecipe(() -> result, grid);
     }
 
     public static ItemStack getWorkbenchItem() {
@@ -170,20 +164,27 @@ public class WorkbenchManager implements Listener {
     }
 
     private static void updateCraftingOutput(Inventory inv) {
-        ItemStack[] grid = new ItemStack[9];
-        int idx = 0;
-        for (int r = 0; r < 3; r++) {
-            for (int c = 1; c <= 3; c++) {
-                int slot = r * 9 + c;
-                grid[idx++] = inv.getItem(slot);
+        ItemStack[] grid = getGridItems(inv);
+        Supplier<ItemStack> matchedSupplier = null;
+
+        for (Map.Entry<String, Material[]> entry : recipeGridMap.entrySet()) {
+            Material[] recipeMats = entry.getValue();
+            boolean match = true;
+            for (int i = 0; i < 9; i++) {
+                Material slotMat = (grid[i] == null || grid[i].getType() == Material.AIR) ? Material.AIR : grid[i].getType();
+                if (slotMat != recipeMats[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                matchedSupplier = registeredRecipeSuppliers.get(entry.getKey());
+                break;
             }
         }
 
-        String currentKey = generateRecipeKey(grid);
-        Supplier<ItemStack> supplier = registeredRecipeSuppliers.get(currentKey);
-
-        if (supplier != null) {
-            inv.setItem(15, supplier.get());
+        if (matchedSupplier != null) {
+            inv.setItem(15, matchedSupplier.get());
         } else {
             inv.setItem(15, null);
         }
@@ -202,10 +203,27 @@ public class WorkbenchManager implements Listener {
         if (rawSlot == 15) {
             event.setCancelled(true);
             if (clicked != null && clicked.getType() != Material.AIR) {
-                String currentKey = generateRecipeKey(getGridItems(inv));
-                Supplier<ItemStack> supplier = registeredRecipeSuppliers.get(currentKey);
-                if (supplier == null) return;
-                ItemStack actualResult = supplier.get();
+                ItemStack[] grid = getGridItems(inv);
+                Supplier<ItemStack> matchedSupplier = null;
+
+                for (Map.Entry<String, Material[]> entry : recipeGridMap.entrySet()) {
+                    Material[] recipeMats = entry.getValue();
+                    boolean match = true;
+                    for (int i = 0; i < 9; i++) {
+                        Material slotMat = (grid[i] == null || grid[i].getType() == Material.AIR) ? Material.AIR : grid[i].getType();
+                        if (slotMat != recipeMats[i]) {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match) {
+                        matchedSupplier = registeredRecipeSuppliers.get(entry.getKey());
+                        break;
+                    }
+                }
+
+                if (matchedSupplier == null) return;
+                ItemStack actualResult = matchedSupplier.get();
 
                 for (int r = 0; r < 3; r++) {
                     for (int c = 1; c <= 3; c++) {
@@ -289,7 +307,7 @@ public class WorkbenchManager implements Listener {
         block.getWorld().dropItemNaturally(loc.add(0.5, 0.5, 0.5), getWorkbenchItem());
     }
 
-    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         Block block = event.getClickedBlock();

@@ -15,13 +15,11 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.viriya.kryo.blueprint.BlueprintItem;
 import org.viriya.kryo.workbench.WorkbenchManager;
 
-import javax.swing.*;
 import java.util.Random;
 
 public class SieveManager implements Listener {
@@ -33,6 +31,7 @@ public class SieveManager implements Listener {
         if (sieveKey == null) {
             sieveKey = new NamespacedKey(plugin, "custom_sieve");
         }
+        registerRecipes();
     }
 
     public static ItemStack getSieveItem() {
@@ -53,6 +52,16 @@ public class SieveManager implements Listener {
         ItemMeta meta = item.getItemMeta();
         Byte value = meta.getPersistentDataContainer().get(sieveKey, PersistentDataType.BYTE);
         return value != null && value == 1;
+    }
+
+    private static void registerRecipes() {
+        ItemStack[] sieveRecipe = {
+                null, null, null,
+                new ItemStack(Material.OAK_PLANKS), null, new ItemStack(Material.OAK_PLANKS),
+                new ItemStack(Material.OAK_PLANKS), new ItemStack(Material.OAK_PLANKS), new ItemStack(Material.OAK_PLANKS)
+        };
+        WorkbenchManager.registerCustomRecipe(SieveManager::getSieveItem, sieveRecipe);
+        BlueprintItem.registerToGroup("TOOLS", SieveManager.getSieveItem(), WorkbenchManager.getWorkbenchItem(), sieveRecipe);
     }
 
     private static ItemStack getRandomSieveDrop() {

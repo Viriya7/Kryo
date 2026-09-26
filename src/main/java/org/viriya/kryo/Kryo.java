@@ -38,6 +38,7 @@ public final class Kryo extends JavaPlugin {
         MercuryManager.init(this);
         BulletManager.init(this);
         BulletAssemblyManager.init(this);
+        GunManager.init(this);
 
         WorkbenchManager.init(this);
 
@@ -50,6 +51,7 @@ public final class Kryo extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MercuryManager(),this);
         getServer().getPluginManager().registerEvents(new BulletManager(),this);
         getServer().getPluginManager().registerEvents(new BulletAssemblyManager(),this);
+        getServer().getPluginManager().registerEvents(new GunManager(),this);
 
         PluginCommand kryoCommand = getCommand("kryo");
         if (kryoCommand != null) {
